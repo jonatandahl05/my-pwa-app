@@ -2,6 +2,13 @@ import "./styles/main.css";
 import { getPosts, createPost, deletePost } from "./api/postsApi.js";
 import { setStatus } from "./ui/renderStatus.js";
 import { renderPosts } from "./ui/renderPosts.js";
+import { initAuth } from "./utils/login.js";
+
+const form = document.querySelector("#create-form");
+
+initAuth(form, () => {
+    loadAndRenderPosts();
+});
 
 import {
   loadLocalPosts,
