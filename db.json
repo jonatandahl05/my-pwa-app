@@ -35,5 +35,21 @@
       "title": "awdawd",
       "content": "awdawd"
     }
+  ],
+  "comments": [
+    {
+      "id": "4dfd",
+      "postId": "ad99",
+      "author": "felix",
+      "text": "lol",
+      "createdAt": "2026-02-03T08:25:21.944Z"
+    },
+    {
+      "id": "061f",
+      "postId": "ad99",
+      "author": "rasha",
+      "text": "hehe",
+      "createdAt": "2026-02-03T08:25:33.458Z"
+    }
   ]
 }

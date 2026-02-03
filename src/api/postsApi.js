@@ -3,7 +3,7 @@ import { apiFetch } from "../utils/apiFetch.js";
 const BASE_URL = "http://localhost:3000";
 
 export function getPosts() {
-  return apiFetch(`${BASE_URL}/posts`);
+  return apiFetch(`${BASE_URL}/posts?_embed=comments`);
 }
 
 export function createPost(data) {

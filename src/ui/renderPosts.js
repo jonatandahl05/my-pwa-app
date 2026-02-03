@@ -13,6 +13,17 @@ export function renderPosts(container, posts, onDelete) {
             <button class="delete" type="button">Ta bort</button>
           </div>
           <p>${escapeHtml(post.content ?? "")}</p>
+          <div class="comments">
+            <h4>Comments</h4>
+            <ul class="comment-list">
+              ${renderComments(post.comments)}
+            </ul>
+            <form class="comment-form" data-post-id="${post.id}">
+              <input name="author" placeholder="Name" />
+              <input name="text" placeholder="Write a comment..." required />
+              <button type="submit">Add comment</button>
+            </form>
+          </div>
         </article>
       `
     )
@@ -26,6 +37,18 @@ export function renderPosts(container, posts, onDelete) {
       onDelete(id);
     });
   });
+}
+
+function renderComments(comments) {
+  if (!comments?.length) {
+    return "<li>No comments yet.</li>";
+  }
+  return comments
+    .map(
+      (comment) =>
+        `<li><strong>${escapeHtml(comment.author ?? "Anon")}</strong>: ${escapeHtml(comment.text ?? "")}</li>`
+    )
+    .join("");
 }
 
 function escapeHtml(str) {
