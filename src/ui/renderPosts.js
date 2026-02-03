@@ -22,8 +22,8 @@ export function renderPosts(container, posts, onDelete) {
   container.querySelectorAll(".delete").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const postEl = e.target.closest(".post");
-      const id = Number(postEl.dataset.id);
-      onDelete(id);
+    const id = postEl.dataset.id; // string (funkar för både "1" och "uuid")
+    onDelete(id);
     });
   });
 }
