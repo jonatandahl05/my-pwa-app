@@ -14,7 +14,6 @@ import {
 
 
 const postsContainer = document.querySelector("#posts");
-const form = document.querySelector("#create-form");
 const titleInput = document.querySelector("#title");
 const contentInput = document.querySelector("#content");
 
