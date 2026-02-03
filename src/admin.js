@@ -1,57 +1,128 @@
 import "./styles/main.css";
 
-const postsEl = document.querySelector("#posts");
+import { getPosts, createPost, deletePost } from "./api/postsApi.js";
+import { setStatus } from "./ui/renderStatus.js";
+import { renderPosts } from "./ui/renderPosts.js";
 
-const API_BASE =
-  location.hostname === "localhost"
-    ? "http://localhost:3000"
-    : `http://${location.hostname}:3000`;
+// Admin.html använder samma container-id som index
+const postsContainer = document.querySelector("#posts");
 
-async function fetchPosts() {
-  const res = await fetch(`${API_BASE}/posts`);
-  if (!res.ok) throw new Error("Kunde inte hämta inlägg");
-  return res.json();
-}
+// Admin-form (finns bara på admin.html)
+const form = document.querySelector("#create-form");
+const titleInput = document.querySelector("#title");
+const contentInput = document.querySelector("#content");
 
-function renderAdminPosts(posts) {
-  if (!posts.length) {
-    postsEl.innerHTML = "<p>Inga inlägg ännu.</p>";
-    return;
+const isAdminView = Boolean(form);
+
+// ===== localStorage draft (admin) =====
+const DRAFT_KEY = "adminDraft";
+
+function loadDraft() {
+  if (!titleInput || !contentInput) return;
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (draft?.title && !titleInput.value) titleInput.value = draft.title;
+    if (draft?.content && !contentInput.value) contentInput.value = draft.content;
+  } catch {
+    // ignore
   }
-
-  postsEl.innerHTML = posts
-    .map(
-      (post) => `
-      <article class="admin-card">
-        <h3>${post.title}</h3>
-        <p>${post.content}</p>
-
-        <button data-delete="${post.id}" class="btn-secondary">
-          Ta bort
-        </button>
-      </article>
-    `
-    )
-    .join("");
-
-  document.querySelectorAll("[data-delete]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.delete;
-      await deletePost(id);
-      loadPosts();
-    });
-  });
-}
-''
-async function deletePost(id) {
-  await fetch(`${API_BASE}/posts/${id}`, {
-    method: "DELETE",
-  });
-}ß
-
-async function loadPosts() {
-  const posts = await fetchPosts();
-  renderAdminPosts(posts);
 }
 
-loadPosts();
+function saveDraft() {
+  if (!titleInput || !contentInput) return;
+  try {
+    localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        title: titleInput.value,
+        content: contentInput.value,
+        updatedAt: new Date().toISOString(),
+      })
+    );
+  } catch {
+    // ignore
+  }
+}
+
+function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+async function loadAndRenderPosts() {
+  if (!postsContainer) return;
+
+  setStatus("Laddar inlägg...");
+
+  try {
+    const posts = await getPosts();
+
+   
+    renderPosts(postsContainer, posts, isAdminView ? handleDeletePost : undefined);
+
+    setStatus(`Hittade ${posts.length} inlägg.`);
+  } catch (err) {
+    console.error("Error loading posts:", err);
+    setStatus("Kunde inte ladda inlägg, API: Offline.");
+    postsContainer.innerHTML = "<p>Kunde inte ladda inlägg.</p>";
+  }
+}
+
+async function handleDeletePost(id) {
+  setStatus("Tar bort inlägg...");
+  try {
+    await deletePost(id);
+    setStatus("Inlägg borttaget.");
+    await loadAndRenderPosts();
+  } catch (err) {
+    console.error("Error deleting post:", err);
+    setStatus("Kunde inte ta bort inlägg.");
+  }
+}
+
+
+if (form) {
+  // ladda ev. draft när du öppnar admin
+  loadDraft();
+
+  // autospara draft medan du skriver
+  titleInput?.addEventListener("input", saveDraft);
+  contentInput?.addEventListener("input", saveDraft);
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const title = titleInput?.value?.trim();
+    const content = contentInput?.value?.trim();
+    if (!title || !content) return;
+
+    try {
+      setStatus("Skapar...");
+
+      await createPost({
+        title,
+        content,
+        createdAt: new Date().toISOString(),
+      });
+
+      if (titleInput) titleInput.value = "";
+      if (contentInput) contentInput.value = "";
+
+      clearDraft();
+
+      await loadAndRenderPosts();
+      setStatus("Publicerat ✅");
+    } catch (err) {
+      console.error(err);
+      setStatus("Fel vid POST ❌");
+    }
+  });
+}
+
+// init
+loadAndRenderPosts();
