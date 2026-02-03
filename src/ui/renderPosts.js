@@ -1,34 +1,37 @@
 import { isAdmin } from "../utils/login.js";
 
 export function renderPosts(container, posts, onDelete) {
-    container.innerHTML = posts
-      .map(
-        (post) => `
+  const isAdminPage = location.pathname.endsWith("/admin.html") || location.pathname.endsWith("admin.html");
+  const canDelete = Boolean(onDelete) && isAdminPage;
+
+  container.innerHTML = posts
+    .map(
+      (post) => `
           <article class="post-card">
-            <h3>${post.title}</h3>
-            <p>${post.content}</p>
-  
+            <h3>${escapeHtml(post.title ?? "")}</h3>
+            <p>${escapeHtml(post.content ?? "")}</p>
+
             ${
-              onDelete
-                ? `<button class="btn btn--danger" data-delete="${post.id}">
+              canDelete
+                ? `<button class="btn btn--danger" type="button" data-delete="${post.id}">
                      Ta bort
                    </button>`
                 : ""
             }
           </article>
         `
-      )
-      .join("");
-  
-    // koppla delete-clicks ENDAST om admin
-    if (onDelete) {
-      container.querySelectorAll("[data-delete]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          onDelete(btn.dataset.delete);
-        });
+    )
+    .join("");
+
+  // koppla delete-clicks ENDAST om admin
+  if (canDelete) {
+    container.querySelectorAll("[data-delete]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        onDelete(btn.getAttribute("data-delete"));
       });
-    }
+    });
   }
+}
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => (
