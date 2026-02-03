@@ -2,8 +2,7 @@ import "./styles/main.css";
 import { getPosts, createPost, deletePost } from "./api/postsApi.js";
 import { setStatus } from "./ui/renderStatus.js";
 import { renderPosts } from "./ui/renderPosts.js";
-import { initAuth } from "./utils/login.js";
-import { isAdmin } from "./utils/login.js";
+import { initAuth, isAdmin } from "./utils/login.js";
 import {
   loadLocalPosts,
   addLocalPost,
@@ -18,7 +17,8 @@ const contentInput = document.querySelector("#content");
 const adminLink = document.getElementById("admin-link");
 
 initAuth(form, () => {
-    loadAndRenderPosts();
+  if (!adminLink) return;
+  adminLink.style.display = isAdmin() ? "inline-block" : "none";
 });
 
 if (adminLink && !isAdmin()) {
