@@ -1,16 +1,12 @@
 export async function apiFetch(url, options = {}) {
-    try {
-        const res = await fetch(url, options);
-        if (!res.ok) throw new Error("Fetch failed + ${res.status}");
+  const res = await fetch(url, options);
 
-        if (res.status === 204) 
-            return null; // No content to return
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Fetch failed: ${res.status} ${res.statusText} ${text}`);
+  }
 
-        return res.json();
+  if (res.status === 204) return null;
 
-    } catch (err) {
-        console.error("API Fetch Error:", err);
-        throw err; // Re-throw the error for further handling
-    }
-
+  return res.json();
 }

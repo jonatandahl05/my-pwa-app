@@ -3,13 +3,7 @@ import { getPosts, createPost, deletePost } from "./api/postsApi.js";
 import { setStatus } from "./ui/renderStatus.js";
 import { renderPosts } from "./ui/renderPosts.js";
 import { initAuth } from "./utils/login.js";
-
-const form = document.querySelector("#create-form");
-
-initAuth(form, () => {
-    loadAndRenderPosts();
-});
-
+import { isAdmin } from "./utils/login.js";
 import {
   loadLocalPosts,
   addLocalPost,
@@ -17,12 +11,20 @@ import {
   saveLocalPosts,
 } from "./storage/localPosts.js";
 
-
-
-
+const form = document.querySelector("#create-form");
 const postsContainer = document.querySelector("#posts");
 const titleInput = document.querySelector("#title");
 const contentInput = document.querySelector("#content");
+const adminLink = document.getElementById("admin-link");
+
+initAuth(form, () => {
+    loadAndRenderPosts();
+});
+
+if (adminLink && !isAdmin()) {
+  adminLink.style.display = "none";
+}
+
 
 async function loadAndRenderPosts() {
   setStatus("Laddar inlägg...");

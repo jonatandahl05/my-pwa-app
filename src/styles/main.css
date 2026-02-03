@@ -75,6 +75,19 @@ header h1 {
   background: rgba(2, 6, 23, 0.35);
 }
 
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #444;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.btn:hover {
+  background: #666;
+}
+
 /* ===== LAYOUT ===== */
 
 form,

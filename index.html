@@ -6,19 +6,18 @@
     <title>Vite Test</title>
   </head>
   <body>
-
-
     <header>
       <h1>Posts</h1>
-      <a href="/admin.html" class="admin-btn">Admin</a>
+      <a href="admin.html" id="admin-link" class="btn">Admin</a>
       <p id="status">—</p>
-    </header>
-    <div id="auth">
+
+      <div id="auth">
         <span id="user-info"></span>
         <input id="login-name" placeholder="Admin-namn" />
         <button id="login-btn">Logga in</button>
         <button id="logout-btn" hidden>Logga ut</button>
-    </div>
+      </div>
+    </header>
 
     <form id="create-form">
       <input id="title" placeholder="Titel" required />

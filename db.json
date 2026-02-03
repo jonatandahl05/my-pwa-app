@@ -1,28 +1,6 @@
 {
   "posts": [
     {
-      "id": "0b98",
-      "title": "Jonis",
-      "content": "Hur fungerar detta, varför ska vi"
-    },
-    {
-      "id": "e10f",
-      "title": "hej",
-      "content": "hej"
-    },
-    {
-      "id": "2a29",
-      "title": "test",
-      "content": "tetst",
-      "createdAt": "2026-02-03T09:19:05.083Z"
-    },
-    {
-      "id": "60b5",
-      "title": "wad",
-      "content": "awd",
-      "createdAt": "2026-02-03T09:21:31.934Z"
-    },
-    {
       "id": "36e1",
       "title": "adwad",
       "content": "awdwad",
@@ -33,6 +11,27 @@
       "title": "awdawd",
       "content": "awdawd",
       "createdAt": "2026-02-03T09:33:33.401Z"
+    },
+    {
+      "id": "c873",
+      "title": "Nytt inlägg!",
+      "content": "Jag är ny här!"
+    },
+    {
+      "id": "fc46",
+      "title": "Är jag först?",
+      "content": "First?"
+    },
+    {
+      "id": "1b77",
+      "title": "Admin Inlägg",
+      "content": "Adiminu",
+      "createdAt": "2026-02-03T11:49:57.402Z"
+    },
+    {
+      "id": "3093",
+      "title": "Lägg ägg!",
+      "content": "Ägg är bra!"
     }
   ],
   "comments": [

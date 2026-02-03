@@ -51,24 +51,31 @@ export function initAuth(form, onAuthChange) {
             loginInput.hidden = false;
             loginBtn.hidden = false;
             logoutBtn.hidden = true;
-            form.style.display = "none";
+            //form.style.display = "none";
         }
 
         if (onAuthChange) onAuthChange();
     }
 
     loginBtn.addEventListener("click", () => {
-        const name = loginInput.value.trim();
-        if (!name) return;
-        const role = name === "admin" ? "admin" : "editor";
-        login(name, role);
-        renderAuth();
+    const name = loginInput.value.trim();
+    if (!name) return;
+
+    const role = name === "admin" ? "admin" : "editor";
+    login(name, role);
+    renderAuth();
+
+    if (role === "admin") {
+        window.location.href = "/admin.html";
+    }
     });
 
     logoutBtn.addEventListener("click", () => {
         logout();
         renderAuth();
     });
+
+    
 
     renderAuth();
 }
