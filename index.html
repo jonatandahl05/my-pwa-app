@@ -10,7 +10,13 @@
       <h1>Posts</h1>
       <p id="status">—</p>
     </header>
-    
+    <div id="auth">
+        <span id="user-info"></span>
+        <input id="login-name" placeholder="Admin-namn" />
+        <button id="login-btn">Logga in</button>
+        <button id="logout-btn" hidden>Logga ut</button>
+    </div>
+
     <form id="create-form">
       <input id="title" placeholder="Titel" required />
       <textarea id="content" placeholder="Text" required></textarea>
