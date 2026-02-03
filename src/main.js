@@ -100,3 +100,8 @@ form.addEventListener("submit", async (e) => {
 
 loadAndRenderPosts();
 
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js")
+        .then(() => console.log("Service Worker registrerad"))
+        .catch(err => console.error("SW error:", err));
+}
