@@ -5,7 +5,6 @@ import { renderPosts } from "./ui/renderPosts.js";
 
 
 const postsContainer = document.querySelector("#posts");
-const form = document.querySelector("#create-form");
 const titleInput = document.querySelector("#title");
 const contentInput = document.querySelector("#content");
 
@@ -34,24 +33,6 @@ async function handleDeletePost(id) {
     }
 }
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const title = titleInput.value.trim();
-  const content = contentInput.value.trim();
-  if (!title || !content) return;
-
-  try {
-    setStatus("Skapar...");
-    await createPost({ title, content });
-    titleInput.value = "";
-    contentInput.value = "";
-    await loadAndRenderPosts();
-  } catch (err) {
-    console.error(err);
-    setStatus("Fel vid POST ❌");
-  }
-});
 
 
 loadAndRenderPosts();
