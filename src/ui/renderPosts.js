@@ -1,34 +1,34 @@
 import { isAdmin } from "../utils/login.js";
 
 export function renderPosts(container, posts, onDelete) {
-    if (!posts?.length) {
-        container.innerHTML = "<p>Inga inlägg att visa.</p>";
-        return;
-    }
-
     container.innerHTML = posts
-    .map(
-      (post) => `
-        <article class="post" data-id="${post.id}">
-          <div class="row">
-            <h3>${escapeHtml(post.title)}</h3>
-            ${isAdmin() ? `<button class="delete">Ta bort</button>` : ""}
-          </div>
-          <p>${escapeHtml(post.content ?? "")}</p>
-        </article>
-      `
-    )
-    .join("");
-
-  // koppla delete events
-  container.querySelectorAll(".delete").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const postEl = e.target.closest(".post");
-    const id = postEl.dataset.id; // string (funkar för både "1" och "uuid")
-    onDelete(id);
-    });
-  });
-}
+      .map(
+        (post) => `
+          <article class="post-card">
+            <h3>${post.title}</h3>
+            <p>${post.content}</p>
+  
+            ${
+              onDelete
+                ? `<button class="btn btn--danger" data-delete="${post.id}">
+                     Ta bort
+                   </button>`
+                : ""
+            }
+          </article>
+        `
+      )
+      .join("");
+  
+    // koppla delete-clicks ENDAST om admin
+    if (onDelete) {
+      container.querySelectorAll("[data-delete]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          onDelete(btn.dataset.delete);
+        });
+      });
+    }
+  }
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => (

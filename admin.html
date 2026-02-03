@@ -6,22 +6,22 @@
     <title>Admin page</title>
 </head>
 <body>
+  <header>
+    <h1>Admin</h1>
+    <p id="status">—</p>
+  </header>
 
-    <header>
-        <h1>Posts</h1>
-        <p id="status">—</p>
-      </header>
-      
-      <div id="posts"></div>
-
+  <main>
     <form id="create-form">
-        <input id="title" placeholder="Titel" required />
-        <textarea id="content" placeholder="Text" required></textarea>
-        <button type="submit">Lägg till</button>
-      </form>
+      <input id="title" placeholder="Titel" required />
+      <textarea id="content" placeholder="Text" required></textarea>
+      <button type="submit">Lägg till</button>
+    </form>
 
 
-      <script type="module" src="/src/admin.js"></script>
-    
+    <div id="posts"></div>
+  </main>
+
+  <script type="module" src="/src/admin.js"></script>
 </body>
 </html>

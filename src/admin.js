@@ -124,5 +124,15 @@ if (form) {
   });
 }
 
+if (postsContainer) {
+    postsContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-delete]");
+      if (!btn) return;
+  
+      const id = btn.getAttribute("data-delete");
+      handleDeletePost(id);
+    });
+  }
+
 // init
 loadAndRenderPosts();
