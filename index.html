@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite Test</title>
+  </head>
+  <body>
+    <header>
+      <h1>Posts</h1>
+      <p id="status">—</p>
+    </header>
+    
+    <form id="create-form">
+      <input id="title" placeholder="Titel" required />
+      <textarea id="content" placeholder="Text" required></textarea>
+      <button type="submit">Lägg till</button>
+    </form>
+    <div id="posts"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

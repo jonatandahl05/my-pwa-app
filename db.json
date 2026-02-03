@@ -1,0 +1,34 @@
+{
+  "posts": [
+    {
+      "id": "8bf1",
+      "title": "hej",
+      "content": "test"
+    },
+    {
+      "id": "2dd2",
+      "title": "varför gör det",
+      "content": "Herjsan vad händfer"
+    },
+    {
+      "id": "0b98",
+      "title": "Jonis",
+      "content": "Hur fungerar detta, varför ska vi"
+    },
+    {
+      "id": "ad99",
+      "title": "test",
+      "content": "hgej"
+    },
+    {
+      "id": "453f",
+      "title": "awd",
+      "content": "awd"
+    },
+    {
+      "id": "e10f",
+      "title": "hej",
+      "content": "hej"
+    }
+  ]
+}
