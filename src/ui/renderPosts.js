@@ -1,3 +1,5 @@
+import { isAdmin } from "../utils/login.js";
+
 export function renderPosts(container, posts, onDelete) {
     if (!posts?.length) {
         container.innerHTML = "<p>Inga inlägg att visa.</p>";
@@ -10,7 +12,7 @@ export function renderPosts(container, posts, onDelete) {
         <article class="post" data-id="${post.id}">
           <div class="row">
             <h3>${escapeHtml(post.title)}</h3>
-            <button class="delete" type="button">Ta bort</button>
+            ${isAdmin() ? `<button class="delete">Ta bort</button>` : ""}
           </div>
           <p>${escapeHtml(post.content ?? "")}</p>
         </article>
