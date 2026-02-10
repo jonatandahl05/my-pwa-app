@@ -1,22 +1,6 @@
 {
   "posts": [
     {
-      "id": "36e1",
-      "title": "adwad",
-      "content": "awdwad",
-      "createdAt": "2026-02-03T09:33:29.618Z"
-    },
-    {
-      "id": "c873",
-      "title": "Nytt inlägg!",
-      "content": "Jag är ny här!"
-    },
-    {
-      "id": "fc46",
-      "title": "Är jag först?",
-      "content": "First?"
-    },
-    {
       "id": "1b77",
       "title": "Admin Inlägg",
       "content": "Adiminu",
