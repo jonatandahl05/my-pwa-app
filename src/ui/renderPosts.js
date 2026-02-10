@@ -5,6 +5,18 @@ function escapeHtml(str) {
     );
 }
 
+
+export function renderPosts(container, posts, onDelete) {
+  const isAdminPage = location.pathname.endsWith("/admin.html") || location.pathname.endsWith("admin.html");
+  const canDelete = Boolean(onDelete) && isAdminPage;
+
+  container.innerHTML = posts
+    .map(
+      (post) => `
+          <article class="post-card">
+            <h3>${escapeHtml(post.title ?? "")}</h3>
+            <div class="post-content">${sanitizePostContent(post.content ?? "")}</div>
+
 // Skapar HTML for en enskild post
 function createPostHtml(post, canDelete) {
     return `

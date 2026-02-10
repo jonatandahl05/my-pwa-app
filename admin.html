@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin page</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+    <style>
+      .image-upload { margin: 1rem 0; display: grid; gap: .5rem; }
+      .image-upload .hint { opacity: .8; font-size: .9rem; margin: 0; }
+      .image-preview img { max-width: 100%; height: auto; border-radius: 10px; }
+      .variants ul { margin: 0; padding-left: 1.2rem; }
+      .variants li { margin: .2rem 0; }
+      #pictureSnippet { width: 100%; }
+    </style>
 </head>
 <body>
 <header>
@@ -15,15 +24,44 @@
 
 <main>
     <form id="create-form">
-        <input id="title" placeholder="Titel" required />
-        <textarea id="content" placeholder="Text" required></textarea>
-        <button type="submit">Lägg till</button>
+      <input id="title" placeholder="Titel" required />
+      <textarea id="content" placeholder="Text" required></textarea>
+      <div class="image-upload">
+        <label for="heroImage"><strong>Bild (grundbild)</strong></label>
+        <input id="heroImage" type="file" accept="image/*" />
+        <p class="hint">Välj en bild så genererar vi responsive-varianter (t.ex. 320/640/960/1280px). Du får även en färdig <code>picture</code>-snippet att klistra in.</p>
+
+        <div id="imagePreview" class="image-preview" hidden>
+          <p><strong>Förhandsvisning</strong></p>
+          <img id="previewImg" alt="Förhandsvisning" />
+        </div>
+
+        <div id="variants" class="variants" hidden>
+          <p><strong>Genererade varianter</strong></p>
+          <ul id="variantsList"></ul>
+
+          <label for="pictureSnippet"><strong>HTML-snippet</strong></label>
+          <textarea id="pictureSnippet" rows="6" readonly></textarea>
+          <button type="button" id="copySnippet" class="btn">Kopiera snippet</button>
+        </div>
+      </div>
+      <button type="submit">Lägg till</button>
     </form>
 
     <div id="posts"></div>
     <div id="load-trigger" style="height: 1px;"></div>
 </main>
 
-<script type="module" src="/src/admin.js"></script>
+  <script>
+    document.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'copySnippet') {
+        const ta = document.getElementById('pictureSnippet');
+        if (!ta) return;
+        ta.select();
+        document.execCommand('copy');
+      }
+    });
+  </script>
+  <script type="module" src="/src/admin.js"></script>
 </body>
 </html>
