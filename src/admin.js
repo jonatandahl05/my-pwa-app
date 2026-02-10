@@ -136,3 +136,6 @@ if (postsContainer) {
 
 // init
 loadAndRenderPosts();
+
+export function initAdmin()
+{ console.log("Admin-modulen laddades (lazy-loaded)"); }// Här kan du lägga admin-logik senare }

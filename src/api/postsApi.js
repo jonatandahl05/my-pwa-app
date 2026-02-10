@@ -1,5 +1,7 @@
 import { apiFetch } from "../utils/apiFetch.js";
 
+console.log("🟢 postsApi-modulen laddades (lazy-loaded)");
+
 const BASE_URL = "http://localhost:3000";
 
 export function getPosts() {

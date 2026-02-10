@@ -1,4 +1,6 @@
 import { isAdmin } from "../utils/login.js";
+console.log("🟢 renderPosts-modulen laddades (lazy-loaded)");
+
 
 export function renderPosts(container, posts, onDelete) {
   const isAdminPage = location.pathname.endsWith("/admin.html") || location.pathname.endsWith("admin.html");

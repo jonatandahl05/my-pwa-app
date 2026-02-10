@@ -1,3 +1,5 @@
+console.log("🟢 login-modulen laddades (lazy-loaded)");
+
 export function setCookie(name, value, days = 1) {
     const maxAge = days * 24 * 60 * 60;
     document.cookie = `${name}=${value}; max-age=${maxAge}; path=/`;

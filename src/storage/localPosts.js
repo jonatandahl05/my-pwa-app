@@ -1,3 +1,5 @@
+console.log("🟢 localPosts-modulen laddades (lazy-loaded)");
+
 const KEY = "blog_posts_v1";
 
 export function loadLocalPosts() {
