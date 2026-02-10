@@ -40,7 +40,8 @@
       "id": "c1",
       "postId": null,
       "author": "Felix",
-      "text": "Nice!"
+      "text": "Nice!",
+      "flagged": false
     }
   ]
 }
