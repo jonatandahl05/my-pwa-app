@@ -10,7 +10,7 @@ const form = document.querySelector("#create-form");
 const titleInput = document.querySelector("#title");
 const contentInput = document.querySelector("#content");
 
-// ===== Image upload (responsive variants) =====
+// Image upload element
 const heroInput = document.getElementById("heroImage");
 const imagePreview = document.getElementById("imagePreview");
 const previewImg = document.getElementById("previewImg");
@@ -18,10 +18,8 @@ const variantsBox = document.getElementById("variants");
 const variantsList = document.getElementById("variantsList");
 const pictureSnippet = document.getElementById("pictureSnippet");
 
-// Keep latest generated <picture> HTML so we can save it with the post.
+// Image upload state
 let latestPictureHTML = "";
-
-// You can tweak these widths (must be <= original width).
 const TARGET_WIDTHS = [320, 640, 960, 1280];
 
 const isAdminView = Boolean(form);
@@ -35,147 +33,86 @@ let allPostsLoaded = false;
 // Loading state
 let isLoading = false;
 let errorMessage = "";
-// When editor selects an image, generate responsive variants + <picture> snippet.
-if (heroInput) {
-  heroInput.addEventListener("change", async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
 
-    // Preview original
-    const originalUrl = URL.createObjectURL(file);
-    if (previewImg) previewImg.src = originalUrl;
-    if (imagePreview) imagePreview.hidden = false;
+// ===== Image upload functions =====
 
-    latestPictureHTML = "";
-    if (variantsList) variantsList.innerHTML = "";
-    if (variantsBox) variantsBox.hidden = false;
-
-    let bitmap;
-    try {
-      bitmap = await createImageBitmap(file);
-    } catch (err) {
-      console.error(err);
-      setStatus("Kunde inte läsa bilden.");
-      return;
-    }
-
-    const baseName = file.name
-      .replace(/\.[^.]+$/, "")
-      .replace(/\s+/g, "-")
-      .toLowerCase();
-
-    const webpSources = [];
-    const jpgSources = [];
-
-    for (const w of TARGET_WIDTHS) {
-      if (w > bitmap.width) continue;
-
-      const v = await generateVariant(bitmap, w);
-
-      // Build srcset entries (currently blob URLs for demo)
-      if (v.webpUrl) webpSources.push(`${v.webpUrl} ${w}w`);
-      jpgSources.push(`${v.jpgUrl} ${w}w`);
-
-      // UI list item
-      if (variantsList) {
-        const li = document.createElement("li");
-        const webpKb = v.webpBlob ? (v.webpBlob.size / 1024).toFixed(0) : "-";
-        const jpgKb = (v.jpgBlob.size / 1024).toFixed(0);
-        li.innerHTML = `<strong>${w}px</strong> — webp: ${webpKb} KB, jpg: ${jpgKb} KB`;
-
-        // Optional: let editor download the generated variants
-        addDownloadLink(li, "Download WebP", v.webpBlob, `${baseName}-${w}w.webp`);
-        addDownloadLink(li, "Download JPG", v.jpgBlob, `${baseName}-${w}w.jpg`);
-
-        variantsList.appendChild(li);
-      }
-    }
-
-    // Build and show snippet
-    const fallbackSrc = jpgSources.length ? jpgSources[0].split(" ")[0] : originalUrl;
-    latestPictureHTML = buildPictureHTML({
-      webpSources,
-      jpgSources,
-      fallbackSrc,
-    });
-
-    if (pictureSnippet) pictureSnippet.value = latestPictureHTML;
-
-    // EASIEST FLOW: auto-insert snippet into content (top), only once.
-    if (contentInput && latestPictureHTML && !contentInput.value.includes("<picture>")) {
-      contentInput.value = `${latestPictureHTML}\n\n${contentInput.value}`;
-      saveDraft();
-    }
-
-    setStatus("Bildvarianter genererade ✅");
-  });
-}
-
+// Konverterar canvas till blob
 async function canvasToBlob(canvas, type, quality) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) return reject(new Error("Kunde inte skapa blob"));
-      resolve(blob);
-    }, type, quality);
-  });
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (!blob) return reject(new Error("Kunde inte skapa blob"));
+            resolve(blob);
+        }, type, quality);
+    });
 }
 
+// Genererar en bildvariant i angiven bredd
 async function generateVariant(bitmap, targetWidth) {
-  const scale = targetWidth / bitmap.width;
-  const targetHeight = Math.round(bitmap.height * scale);
+    const scale = targetWidth / bitmap.width;
+    const targetHeight = Math.round(bitmap.height * scale);
 
-  const canvas = document.createElement("canvas");
-  canvas.width = targetWidth;
-  canvas.height = targetHeight;
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
 
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
 
-  // WebP first (best), JPEG fallback
-  let webpBlob;
-  try {
-    webpBlob = await canvasToBlob(canvas, "image/webp", 0.82);
-  } catch {
-    webpBlob = null;
-  }
-  const jpgBlob = await canvasToBlob(canvas, "image/jpeg", 0.85);
+    let webpBlob;
+    try {
+        webpBlob = await canvasToBlob(canvas, "image/webp", 0.82);
+    } catch {
+        webpBlob = null;
+    }
+    const jpgBlob = await canvasToBlob(canvas, "image/jpeg", 0.85);
 
-  const webpUrl = webpBlob ? URL.createObjectURL(webpBlob) : "";
-  const jpgUrl = URL.createObjectURL(jpgBlob);
+    const webpUrl = webpBlob ? URL.createObjectURL(webpBlob) : "";
+    const jpgUrl = URL.createObjectURL(jpgBlob);
 
-  return { webpBlob, jpgBlob, webpUrl, jpgUrl, w: targetWidth, h: targetHeight };
+    return { webpBlob, jpgBlob, webpUrl, jpgUrl, w: targetWidth, h: targetHeight };
 }
 
+// Bygger picture HTML-snippet
 function buildPictureHTML({ webpSources, jpgSources, fallbackSrc }) {
-  // Adjust sizes for your layout.
-  const sizes = "(max-width: 768px) 100vw, 800px";
+    const sizes = "(max-width: 768px) 100vw, 800px";
 
-  const webpSrcset = webpSources.length ? webpSources.join(", ") : "";
-  const jpgSrcset = jpgSources.length ? jpgSources.join(", ") : "";
+    const webpSrcset = webpSources.length ? webpSources.join(", ") : "";
+    const jpgSrcset = jpgSources.length ? jpgSources.join(", ") : "";
 
-  return `<picture>\n` +
-    (webpSrcset
-      ? `  <source type=\"image/webp\" srcset=\"${webpSrcset}\" sizes=\"${sizes}\">\n`
-      : "") +
-    `  <img\n` +
-    `    src=\"${fallbackSrc}\"\n` +
-    (jpgSrcset ? `    srcset=\"${jpgSrcset}\"\n` : "") +
-    `    sizes=\"${sizes}\"\n` +
-    `    alt=\"\"\n` +
-    `    loading=\"lazy\"\n` +
-    `    decoding=\"async\"\n` +
-    `  >\n` +
-    `</picture>`;
+    return `<picture>\n` +
+        (webpSrcset
+            ? `  <source type="image/webp" srcset="${webpSrcset}" sizes="${sizes}">\n`
+            : "") +
+        `  <img\n` +
+        `    src="${fallbackSrc}"\n` +
+        (jpgSrcset ? `    srcset="${jpgSrcset}"\n` : "") +
+        `    sizes="${sizes}"\n` +
+        `    alt=""\n` +
+        `    loading="lazy"\n` +
+        `    decoding="async"\n` +
+        `  >\n` +
+        `</picture>`;
 }
 
+// Lagger till nedladdningslankar
 function addDownloadLink(li, label, blob, filename) {
-  if (!blob) return;
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.textContent = label;
-  a.style.marginLeft = ".5rem";
-  li.appendChild(a);
+    if (!blob) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.textContent = label;
+    a.style.marginLeft = ".5rem";
+    li.appendChild(a);
+}
+
+// Aterstaller bild-UI
+function resetImageUI() {
+    latestPictureHTML = "";
+    if (heroInput) heroInput.value = "";
+    if (pictureSnippet) pictureSnippet.value = "";
+    if (variantsList) variantsList.innerHTML = "";
+    if (variantsBox) variantsBox.hidden = true;
+    if (imagePreview) imagePreview.hidden = true;
 }
 
 // ===== localStorage draft (admin) =====
@@ -221,6 +158,8 @@ function clearDraft() {
     }
 }
 
+// ===== Pagination functions =====
+
 // Laddar nasta sida av posts fran allPosts-arrayen
 function loadMorePosts() {
     if (allPostsLoaded) return;
@@ -264,16 +203,6 @@ async function fetchPosts() {
     const posts = await getPosts();
     return posts;
 }
-    const title = titleInput?.value?.trim();
-    let content = contentInput?.value ?? "";
-
-    // If we have generated a picture snippet, ensure it's included.
-    if (latestPictureHTML && !content.includes("<picture>")) {
-      content = `${latestPictureHTML}\n\n${content}`;
-    }
-
-    content = content.trim();
-    if (!title || !content) return;
 
 // Laddar posts fran API
 async function loadPosts() {
@@ -308,15 +237,6 @@ async function loadAndRenderPosts() {
         render();
     }
 }
-      // reset image UI
-      latestPictureHTML = "";
-      if (heroInput) heroInput.value = "";
-      if (pictureSnippet) pictureSnippet.value = "";
-      if (variantsList) variantsList.innerHTML = "";
-      if (variantsBox) variantsBox.hidden = true;
-      if (imagePreview) imagePreview.hidden = true;
-
-      clearDraft();
 
 // Tar bort en post via API
 async function handleDeletePost(id) {
@@ -345,12 +265,82 @@ function initPaginationObserver() {
     observer.observe(trigger);
 }
 
-// Hantera formularet
+// ===== Event listeners =====
+
+// Bilduppladdning - genererar responsive varianter
+if (heroInput) {
+    heroInput.addEventListener("change", async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const originalUrl = URL.createObjectURL(file);
+        if (previewImg) previewImg.src = originalUrl;
+        if (imagePreview) imagePreview.hidden = false;
+
+        latestPictureHTML = "";
+        if (variantsList) variantsList.innerHTML = "";
+        if (variantsBox) variantsBox.hidden = false;
+
+        let bitmap;
+        try {
+            bitmap = await createImageBitmap(file);
+        } catch (err) {
+            console.error(err);
+            setStatus("Kunde inte lasa bilden.");
+            return;
+        }
+
+        const baseName = file.name
+            .replace(/\.[^.]+$/, "")
+            .replace(/\s+/g, "-")
+            .toLowerCase();
+
+        const webpSources = [];
+        const jpgSources = [];
+
+        for (const w of TARGET_WIDTHS) {
+            if (w > bitmap.width) continue;
+
+            const v = await generateVariant(bitmap, w);
+
+            if (v.webpUrl) webpSources.push(`${v.webpUrl} ${w}w`);
+            jpgSources.push(`${v.jpgUrl} ${w}w`);
+
+            if (variantsList) {
+                const li = document.createElement("li");
+                const webpKb = v.webpBlob ? (v.webpBlob.size / 1024).toFixed(0) : "-";
+                const jpgKb = (v.jpgBlob.size / 1024).toFixed(0);
+                li.innerHTML = `<strong>${w}px</strong> - webp: ${webpKb} KB, jpg: ${jpgKb} KB`;
+
+                addDownloadLink(li, "Download WebP", v.webpBlob, `${baseName}-${w}w.webp`);
+                addDownloadLink(li, "Download JPG", v.jpgBlob, `${baseName}-${w}w.jpg`);
+
+                variantsList.appendChild(li);
+            }
+        }
+
+        const fallbackSrc = jpgSources.length ? jpgSources[0].split(" ")[0] : originalUrl;
+        latestPictureHTML = buildPictureHTML({
+            webpSources,
+            jpgSources,
+            fallbackSrc,
+        });
+
+        if (pictureSnippet) pictureSnippet.value = latestPictureHTML;
+
+        if (contentInput && latestPictureHTML && !contentInput.value.includes("<picture>")) {
+            contentInput.value = `${latestPictureHTML}\n\n${contentInput.value}`;
+            saveDraft();
+        }
+
+        setStatus("Bildvarianter genererade");
+    });
+}
+
+// Formularet
 if (form) {
-    // Ladda ev. utkast nar du oppnar admin
     loadDraft();
 
-    // Autospara utkast medan du skriver
     titleInput?.addEventListener("input", saveDraft);
     contentInput?.addEventListener("input", saveDraft);
 
@@ -358,7 +348,14 @@ if (form) {
         e.preventDefault();
 
         const title = titleInput?.value?.trim();
-        const content = contentInput?.value?.trim();
+        let content = contentInput?.value ?? "";
+
+        // Om vi har genererat en picture snippet, se till att den ar inkluderad
+        if (latestPictureHTML && !content.includes("<picture>")) {
+            content = `${latestPictureHTML}\n\n${content}`;
+        }
+
+        content = content.trim();
         if (!title || !content) return;
 
         try {
@@ -373,6 +370,7 @@ if (form) {
             if (titleInput) titleInput.value = "";
             if (contentInput) contentInput.value = "";
 
+            resetImageUI();
             clearDraft();
 
             await loadAndRenderPosts();
