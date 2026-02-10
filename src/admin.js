@@ -30,20 +30,107 @@ let page = 0;
 const PAGE_SIZE = 5;
 let allPostsLoaded = false;
 
+// When editor selects an image, generate responsive variants + <picture> snippet.
+if (heroInput) {
+  heroInput.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Preview original
+    const originalUrl = URL.createObjectURL(file);
+    if (previewImg) previewImg.src = originalUrl;
+    if (imagePreview) imagePreview.hidden = false;
+
+    latestPictureHTML = "";
+    if (variantsList) variantsList.innerHTML = "";
+    if (variantsBox) variantsBox.hidden = false;
+
+    const originalDataUrl = await fileToDataUrl(file);
+
+    let bitmap;
+    try {
+      bitmap = await createImageBitmap(file);
+    } catch (err) {
+      console.error(err);
+      setStatus("Kunde inte läsa bilden.");
+      return;
+    }
+
 // Loading state
 let isLoading = false;
 let errorMessage = "";
 
 // ===== Image upload functions =====
 
-// Konverterar canvas till blob
-async function canvasToBlob(canvas, type, quality) {
-    return new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => {
-            if (!blob) return reject(new Error("Kunde inte skapa blob"));
-            resolve(blob);
-        }, type, quality);
+    for (const w of TARGET_WIDTHS) {
+      if (w > bitmap.width) continue;
+
+      const v = await generateVariant(bitmap, w);
+
+      // Build srcset entries with data URLs so they persist in db.json.
+      if (v.webpDataUrl) webpSources.push(`${v.webpDataUrl} ${w}w`);
+      jpgSources.push(`${v.jpgDataUrl} ${w}w`);
+
+      // UI list item
+      if (variantsList) {
+        const li = document.createElement("li");
+        const webpKb = v.webpBlob ? (v.webpBlob.size / 1024).toFixed(0) : "-";
+        const jpgKb = (v.jpgBlob.size / 1024).toFixed(0);
+        li.innerHTML = `<strong>${w}px</strong> — webp: ${webpKb} KB, jpg: ${jpgKb} KB`;
+
+        // Optional: let editor download the generated variants
+        addDownloadLink(li, "Download WebP", v.webpBlob, `${baseName}-${w}w.webp`);
+        addDownloadLink(li, "Download JPG", v.jpgBlob, `${baseName}-${w}w.jpg`);
+
+        variantsList.appendChild(li);
+      }
+    }
+
+    // Build and show snippet
+    const fallbackSrc = jpgSources.length ? jpgSources[0].split(" ")[0] : originalDataUrl;
+    latestPictureHTML = buildPictureHTML({
+      webpSources,
+      jpgSources,
+      fallbackSrc,
     });
+
+    if (pictureSnippet) pictureSnippet.value = latestPictureHTML;
+
+    // EASIEST FLOW: auto-insert snippet into content (top), only once.
+    if (contentInput && latestPictureHTML && !contentInput.value.includes("<picture>")) {
+      contentInput.value = `${latestPictureHTML}\n\n${contentInput.value}`;
+      saveDraft();
+    }
+
+    setStatus("Bildvarianter genererade ✅");
+  });
+}
+
+async function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) return reject(new Error("Kunde inte skapa blob"));
+      resolve(blob);
+    }, type, quality);
+  });
+}
+
+async function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Kunde inte läsa filen"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Kunde inte läsa blob"));
+    reader.readAsDataURL(blob);
+  });
 }
 
 // Genererar en bildvariant i angiven bredd
@@ -66,10 +153,10 @@ async function generateVariant(bitmap, targetWidth) {
     }
     const jpgBlob = await canvasToBlob(canvas, "image/jpeg", 0.85);
 
-    const webpUrl = webpBlob ? URL.createObjectURL(webpBlob) : "";
-    const jpgUrl = URL.createObjectURL(jpgBlob);
+  const webpDataUrl = webpBlob ? await blobToDataUrl(webpBlob) : "";
+  const jpgDataUrl = await blobToDataUrl(jpgBlob);
 
-    return { webpBlob, jpgBlob, webpUrl, jpgUrl, w: targetWidth, h: targetHeight };
+  return { webpBlob, jpgBlob, webpDataUrl, jpgDataUrl, w: targetWidth, h: targetHeight };
 }
 
 // Bygger picture HTML-snippet
