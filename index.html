@@ -1,31 +1,33 @@
 <!DOCTYPE html>
 <html lang="sv">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite Test</title>
-  </head>
-  <body>
-    <header>
-      <h1>Posts</h1>
-      <a href="admin.html" id="admin-link" class="btn">Admin</a>
-      <p id="status">—</p>
+</head>
+<body>
+<header>
+    <h1>Posts</h1>
+    <a href="admin.html" id="admin-link" class="btn">Admin</a>
+    <p id="status">-</p>
 
-      <div id="auth">
+    <div id="auth">
         <span id="user-info"></span>
         <input id="login-name" placeholder="Admin-namn" />
         <button id="login-btn">Logga in</button>
         <button id="logout-btn" hidden>Logga ut</button>
-      </div>
-    </header>
+    </div>
+</header>
 
-    <form id="create-form">
-      <input id="title" placeholder="Titel" required />
-      <textarea id="content" placeholder="Text" required></textarea>
-      <button type="submit">Lägg till</button>
-    </form>
-    <div id="posts"></div>
+<form id="create-form">
+    <input id="title" placeholder="Titel" required />
+    <textarea id="content" placeholder="Text" required></textarea>
+    <button type="submit">Lagg till</button>
+</form>
 
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<div id="posts"></div>
+<div id="load-trigger" style="height: 1px;"></div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
 </html>
