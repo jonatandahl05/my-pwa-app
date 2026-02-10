@@ -43,6 +43,8 @@ if (heroInput) {
     if (variantsList) variantsList.innerHTML = "";
     if (variantsBox) variantsBox.hidden = false;
 
+    const originalDataUrl = await fileToDataUrl(file);
+
     let bitmap;
     try {
       bitmap = await createImageBitmap(file);
@@ -65,9 +67,9 @@ if (heroInput) {
 
       const v = await generateVariant(bitmap, w);
 
-      // Build srcset entries (currently blob URLs for demo)
-      if (v.webpUrl) webpSources.push(`${v.webpUrl} ${w}w`);
-      jpgSources.push(`${v.jpgUrl} ${w}w`);
+      // Build srcset entries with data URLs so they persist in db.json.
+      if (v.webpDataUrl) webpSources.push(`${v.webpDataUrl} ${w}w`);
+      jpgSources.push(`${v.jpgDataUrl} ${w}w`);
 
       // UI list item
       if (variantsList) {
@@ -85,7 +87,7 @@ if (heroInput) {
     }
 
     // Build and show snippet
-    const fallbackSrc = jpgSources.length ? jpgSources[0].split(" ")[0] : originalUrl;
+    const fallbackSrc = jpgSources.length ? jpgSources[0].split(" ")[0] : originalDataUrl;
     latestPictureHTML = buildPictureHTML({
       webpSources,
       jpgSources,
@@ -113,6 +115,24 @@ async function canvasToBlob(canvas, type, quality) {
   });
 }
 
+async function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Kunde inte läsa filen"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Kunde inte läsa blob"));
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function generateVariant(bitmap, targetWidth) {
   const scale = targetWidth / bitmap.width;
   const targetHeight = Math.round(bitmap.height * scale);
@@ -133,10 +153,10 @@ async function generateVariant(bitmap, targetWidth) {
   }
   const jpgBlob = await canvasToBlob(canvas, "image/jpeg", 0.85);
 
-  const webpUrl = webpBlob ? URL.createObjectURL(webpBlob) : "";
-  const jpgUrl = URL.createObjectURL(jpgBlob);
+  const webpDataUrl = webpBlob ? await blobToDataUrl(webpBlob) : "";
+  const jpgDataUrl = await blobToDataUrl(jpgBlob);
 
-  return { webpBlob, jpgBlob, webpUrl, jpgUrl, w: targetWidth, h: targetHeight };
+  return { webpBlob, jpgBlob, webpDataUrl, jpgDataUrl, w: targetWidth, h: targetHeight };
 }
 
 function buildPictureHTML({ webpSources, jpgSources, fallbackSrc }) {
