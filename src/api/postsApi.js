@@ -1,6 +1,6 @@
 import { apiFetch } from "../utils/apiFetch.js";
 
-const API_HOST = window.location.hotsname;
+const API_HOST = window.location.hostname;
 const BASE_URL = `http://${API_HOST}:3000`;
 
 
