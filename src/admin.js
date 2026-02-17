@@ -3,6 +3,7 @@ import "./styles/main.css";
 import { getPosts, createPost, deletePost } from "./api/postsApi.js";
 import { setStatus } from "./ui/renderStatus.js";
 import { appendPosts } from "./ui/renderPosts.js";
+import { uploadAndGetPictureHTML } from "./api/imageUpload.js";
 
 // DOM-element
 const postsContainer = document.querySelector("#posts");
@@ -20,7 +21,6 @@ const pictureSnippet = document.getElementById("pictureSnippet");
 
 // Image upload state
 let latestPictureHTML = "";
-const TARGET_WIDTHS = [320, 640, 960, 1280];
 
 const isAdminView = Boolean(form);
 
@@ -30,177 +30,9 @@ let page = 0;
 const PAGE_SIZE = 5;
 let allPostsLoaded = false;
 
-// When editor selects an image, generate responsive variants + <picture> snippet.
-if (heroInput) {
-  heroInput.addEventListener("change", async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Preview original
-    const originalUrl = URL.createObjectURL(file);
-    if (previewImg) previewImg.src = originalUrl;
-    if (imagePreview) imagePreview.hidden = false;
-
-    latestPictureHTML = "";
-    if (variantsList) variantsList.innerHTML = "";
-    if (variantsBox) variantsBox.hidden = false;
-
-    const originalDataUrl = await fileToDataUrl(file);
-
-    let bitmap;
-    try {
-      bitmap = await createImageBitmap(file);
-    } catch (err) {
-      console.error(err);
-      setStatus("Kunde inte läsa bilden.");
-      return;
-    }
-
 // Loading state
 let isLoading = false;
 let errorMessage = "";
-
-// ===== Image upload functions =====
-
-    for (const w of TARGET_WIDTHS) {
-      if (w > bitmap.width) continue;
-
-      const v = await generateVariant(bitmap, w);
-
-      // Build srcset entries with data URLs so they persist in db.json.
-      if (v.webpDataUrl) webpSources.push(`${v.webpDataUrl} ${w}w`);
-      jpgSources.push(`${v.jpgDataUrl} ${w}w`);
-
-      // UI list item
-      if (variantsList) {
-        const li = document.createElement("li");
-        const webpKb = v.webpBlob ? (v.webpBlob.size / 1024).toFixed(0) : "-";
-        const jpgKb = (v.jpgBlob.size / 1024).toFixed(0);
-        li.innerHTML = `<strong>${w}px</strong> — webp: ${webpKb} KB, jpg: ${jpgKb} KB`;
-
-        // Optional: let editor download the generated variants
-        addDownloadLink(li, "Download WebP", v.webpBlob, `${baseName}-${w}w.webp`);
-        addDownloadLink(li, "Download JPG", v.jpgBlob, `${baseName}-${w}w.jpg`);
-
-        variantsList.appendChild(li);
-      }
-    }
-
-    // Build and show snippet
-    const fallbackSrc = jpgSources.length ? jpgSources[0].split(" ")[0] : originalDataUrl;
-    latestPictureHTML = buildPictureHTML({
-      webpSources,
-      jpgSources,
-      fallbackSrc,
-    });
-
-    if (pictureSnippet) pictureSnippet.value = latestPictureHTML;
-
-    // EASIEST FLOW: auto-insert snippet into content (top), only once.
-    if (contentInput && latestPictureHTML && !contentInput.value.includes("<picture>")) {
-      contentInput.value = `${latestPictureHTML}\n\n${contentInput.value}`;
-      saveDraft();
-    }
-
-    setStatus("Bildvarianter genererade ✅");
-  });
-}
-
-async function canvasToBlob(canvas, type, quality) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) return reject(new Error("Kunde inte skapa blob"));
-      resolve(blob);
-    }, type, quality);
-  });
-}
-
-async function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Kunde inte läsa filen"));
-    reader.readAsDataURL(file);
-  });
-}
-
-async function blobToDataUrl(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Kunde inte läsa blob"));
-    reader.readAsDataURL(blob);
-  });
-}
-
-// Genererar en bildvariant i angiven bredd
-async function generateVariant(bitmap, targetWidth) {
-    const scale = targetWidth / bitmap.width;
-    const targetHeight = Math.round(bitmap.height * scale);
-
-    const canvas = document.createElement("canvas");
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
-
-    let webpBlob;
-    try {
-        webpBlob = await canvasToBlob(canvas, "image/webp", 0.82);
-    } catch {
-        webpBlob = null;
-    }
-    const jpgBlob = await canvasToBlob(canvas, "image/jpeg", 0.85);
-
-  const webpDataUrl = webpBlob ? await blobToDataUrl(webpBlob) : "";
-  const jpgDataUrl = await blobToDataUrl(jpgBlob);
-
-  return { webpBlob, jpgBlob, webpDataUrl, jpgDataUrl, w: targetWidth, h: targetHeight };
-}
-
-// Bygger picture HTML-snippet
-function buildPictureHTML({ webpSources, jpgSources, fallbackSrc }) {
-    const sizes = "(max-width: 768px) 100vw, 800px";
-
-    const webpSrcset = webpSources.length ? webpSources.join(", ") : "";
-    const jpgSrcset = jpgSources.length ? jpgSources.join(", ") : "";
-
-    return `<picture>\n` +
-        (webpSrcset
-            ? `  <source type="image/webp" srcset="${webpSrcset}" sizes="${sizes}">\n`
-            : "") +
-        `  <img\n` +
-        `    src="${fallbackSrc}"\n` +
-        (jpgSrcset ? `    srcset="${jpgSrcset}"\n` : "") +
-        `    sizes="${sizes}"\n` +
-        `    alt=""\n` +
-        `    loading="lazy"\n` +
-        `    decoding="async"\n` +
-        `  >\n` +
-        `</picture>`;
-}
-
-// Lagger till nedladdningslankar
-function addDownloadLink(li, label, blob, filename) {
-    if (!blob) return;
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.textContent = label;
-    a.style.marginLeft = ".5rem";
-    li.appendChild(a);
-}
-
-// Aterstaller bild-UI
-function resetImageUI() {
-    latestPictureHTML = "";
-    if (heroInput) heroInput.value = "";
-    if (pictureSnippet) pictureSnippet.value = "";
-    if (variantsList) variantsList.innerHTML = "";
-    if (variantsBox) variantsBox.hidden = true;
-    if (imagePreview) imagePreview.hidden = true;
-}
 
 // ===== localStorage draft (admin) =====
 const DRAFT_KEY = "adminDraft";
@@ -243,6 +75,16 @@ function clearDraft() {
     } catch {
         // ignore
     }
+}
+
+// Aterstaller bild-UI
+function resetImageUI() {
+    latestPictureHTML = "";
+    if (heroInput) heroInput.value = "";
+    if (pictureSnippet) pictureSnippet.value = "";
+    if (variantsList) variantsList.innerHTML = "";
+    if (variantsBox) variantsBox.hidden = true;
+    if (imagePreview) imagePreview.hidden = true;
 }
 
 // ===== Pagination functions =====
@@ -354,73 +196,53 @@ function initPaginationObserver() {
 
 // ===== Event listeners =====
 
-// Bilduppladdning - genererar responsive varianter
+// Bilduppladdning till Cloudinary
 if (heroInput) {
     heroInput.addEventListener("change", async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Visa lokal forhandsvisning
         const originalUrl = URL.createObjectURL(file);
         if (previewImg) previewImg.src = originalUrl;
         if (imagePreview) imagePreview.hidden = false;
 
-        latestPictureHTML = "";
-        if (variantsList) variantsList.innerHTML = "";
+        // Visa laddnings-status
+        setStatus("Laddar upp bild till Cloudinary...");
         if (variantsBox) variantsBox.hidden = false;
-
-        let bitmap;
-        try {
-            bitmap = await createImageBitmap(file);
-        } catch (err) {
-            console.error(err);
-            setStatus("Kunde inte lasa bilden.");
-            return;
+        if (variantsList) {
+            variantsList.innerHTML = "<li>Laddar upp...</li>";
         }
 
-        const baseName = file.name
-            .replace(/\.[^.]+$/, "")
-            .replace(/\s+/g, "-")
-            .toLowerCase();
+        try {
+            // Ladda upp till Cloudinary och fa picture HTML
+            latestPictureHTML = await uploadAndGetPictureHTML(file);
 
-        const webpSources = [];
-        const jpgSources = [];
-
-        for (const w of TARGET_WIDTHS) {
-            if (w > bitmap.width) continue;
-
-            const v = await generateVariant(bitmap, w);
-
-            if (v.webpUrl) webpSources.push(`${v.webpUrl} ${w}w`);
-            jpgSources.push(`${v.jpgUrl} ${w}w`);
-
+            // Visa resultat
+            if (pictureSnippet) pictureSnippet.value = latestPictureHTML;
             if (variantsList) {
-                const li = document.createElement("li");
-                const webpKb = v.webpBlob ? (v.webpBlob.size / 1024).toFixed(0) : "-";
-                const jpgKb = (v.jpgBlob.size / 1024).toFixed(0);
-                li.innerHTML = `<strong>${w}px</strong> - webp: ${webpKb} KB, jpg: ${jpgKb} KB`;
+                variantsList.innerHTML = `
+          <li>Uppladdning klar</li>
+          <li>Responsiva varianter genereras automatiskt av Cloudinary</li>
+          <li>Storlekar: 320px, 640px, 960px, 1280px</li>
+          <li>Format: WebP + JPG fallback</li>
+        `;
+            }
 
-                addDownloadLink(li, "Download WebP", v.webpBlob, `${baseName}-${w}w.webp`);
-                addDownloadLink(li, "Download JPG", v.jpgBlob, `${baseName}-${w}w.jpg`);
+            // Auto-insert i content
+            if (contentInput && latestPictureHTML && !contentInput.value.includes("<picture>")) {
+                contentInput.value = `${latestPictureHTML}\n\n${contentInput.value}`;
+                saveDraft();
+            }
 
-                variantsList.appendChild(li);
+            setStatus("Bild uppladdad till Cloudinary");
+        } catch (err) {
+            console.error("Upload error:", err);
+            setStatus("Bilduppladdning misslyckades");
+            if (variantsList) {
+                variantsList.innerHTML = "<li>Fel vid uppladdning - kontrollera Cloudinary-konfiguration</li>";
             }
         }
-
-        const fallbackSrc = jpgSources.length ? jpgSources[0].split(" ")[0] : originalUrl;
-        latestPictureHTML = buildPictureHTML({
-            webpSources,
-            jpgSources,
-            fallbackSrc,
-        });
-
-        if (pictureSnippet) pictureSnippet.value = latestPictureHTML;
-
-        if (contentInput && latestPictureHTML && !contentInput.value.includes("<picture>")) {
-            contentInput.value = `${latestPictureHTML}\n\n${contentInput.value}`;
-            saveDraft();
-        }
-
-        setStatus("Bildvarianter genererade");
     });
 }
 

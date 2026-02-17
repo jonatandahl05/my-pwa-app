@@ -1,6 +1,8 @@
 import { apiFetch } from "../utils/apiFetch.js";
 
-const BASE_URL = "http://localhost:3000";
+const API_HOST = window.location.hostname;
+const BASE_URL = `http://${API_HOST}:3000`;
+
 
 export function getPosts() {
   return apiFetch(`${BASE_URL}/posts`);
