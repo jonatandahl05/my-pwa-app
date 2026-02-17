@@ -1,7 +1,19 @@
 import { CLOUDINARY_CONFIG, buildCloudinaryPictureHTML } from "../config/cloudinary.js";
 
-// Laddar upp bild till Cloudinary
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
+    || window.location.hostname.includes('github.io');
+
 export async function uploadImage(file) {
+    if (USE_MOCK) {
+        console.warn("Read-only läge: bilduppladdning simulerad");
+        return {
+            publicId: "mock/demo-image",
+            url: "https://placehold.co/800x600?text=Mock+Image",
+            width: 800,
+            height: 600,
+        };
+    }
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
@@ -29,7 +41,6 @@ export async function uploadImage(file) {
     };
 }
 
-// Laddar upp och returnerar picture HTML
 export async function uploadAndGetPictureHTML(file) {
     const result = await uploadImage(file);
     return buildCloudinaryPictureHTML(result.publicId);
