@@ -57,5 +57,14 @@ const cacheHeadersPlugin = () => ({
 });
 
 export default defineConfig({
-  plugins: [cacheHeadersPlugin()],
+    plugins: [cacheHeadersPlugin()],
+
+    base: process.env.GITHUB_ACTIONS ? '/my-pwa-app/' : '/',
+
+    test: {
+        environment: 'jsdom',
+        globals: true,
+        clearMocks: true,
+        include: ['src/**/*.{test,spec}.{js,ts,jsx,tsx}'],
+    },
 });
