@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const mockApiFetch = vi.fn();
 
@@ -10,12 +10,12 @@ vi.mock("../utils/apiFetch.js", () => ({
 
 beforeEach(() => {
   mockApiFetch.mockReset();
-  Object.defineProperty(globalThis, "window", {
-    value: { location: { hostname: "api.test" } },
-    configurable: true,
-  });
-  globalThis.location = globalThis.window.location;
+  vi.stubGlobal("window", { location: { hostname: "api.test" } });
   vi.resetModules();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("postsApi", () => {
