@@ -14,3 +14,6 @@ npm run dev -- --host
 
 i annan terminal skriv: ipconfig
 för att hitta var den ligger, något i stil med http://192.168.1.106:5173
+
+tester:
+npm run test:run -- src/tests/localPosts.test.js
